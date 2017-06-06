@@ -35,7 +35,7 @@ public class DetailsActivity extends AppCompatActivity {
 
             if (array.length > 0) {
                 TextView tv = (TextView) findViewById(R.id.discount);
-                tv.setText("You have been successfully referred using referral code " + array[array.length-1]);
+                tv.setText("You have been successfully referred by " + array[array.length-1] +  " using referral code " + array[array.length-2]);
             }
         }
     }

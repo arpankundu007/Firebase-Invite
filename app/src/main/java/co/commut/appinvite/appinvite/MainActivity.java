@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.appinvite.AppInvite;
@@ -20,24 +21,34 @@ import com.google.android.gms.common.api.ResultCallback;
 
 public class MainActivity extends AppCompatActivity {
 
+    ProgressDialog pd;
     Button shareReferral;
+    private static final String REFER_CODE = "ABCXYZ123", DRIVER_NAME = "Test Driver";
     private static final
     String INVITATION_TITLE = "Invite partners",
-            INVITATION_MESSAGE = "Please install Commut Partner app for added benefits",
+            INVITATION_MESSAGE = "Please install Commut Partner app for added benefits. Refer Code: "+ REFER_CODE,
             INVITATION_CALL_TO_ACTION = "Share";
-    private static final String REFER_CODE = "ABCXYZ123";
+    TextView textView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         shareReferral = (Button) findViewById(R.id.invite_friends);
+        textView = (TextView) findViewById(R.id.textView);
+        textView.setVisibility(View.GONE);
+        pd = new ProgressDialog(this);
+        if(pd.isShowing())
+            pd.dismiss();
         shareReferral.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                pd.setTitle("Loading contacts");
+                pd.setMessage("Please wait ...");
+                pd.show();
                 Intent intent = new AppInviteInvitation.IntentBuilder(INVITATION_TITLE)
                         .setMessage(INVITATION_MESSAGE)
-                        .setDeepLink(Uri.parse("commut://code.coupon/" + REFER_CODE))
+                        .setDeepLink(Uri.parse("commut://code.coupon/" + REFER_CODE + "/" + DRIVER_NAME))
                         .setCallToActionText(INVITATION_CALL_TO_ACTION)
                         .build();
                 startActivityForResult(intent, 0);
@@ -70,11 +81,12 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == 0) {
             if (resultCode == RESULT_OK) {
-
+                pd.dismiss();
                 // You successfully sent the invite,
                 // we can dismiss the button.
                 shareReferral.setVisibility(View.GONE);
-
+                textView.setVisibility(View.VISIBLE);
+                textView.setText("App referred successfully");
                 String[] ids = AppInviteInvitation.getInvitationIds(resultCode, data);
                 StringBuilder sb = new StringBuilder();
                 sb.append("Sent ").append(Integer.toString(ids.length)).append(" invitations: ");
