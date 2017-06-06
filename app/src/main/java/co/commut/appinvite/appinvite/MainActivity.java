@@ -1,9 +1,11 @@
 package co.commut.appinvite.appinvite;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,13 +23,13 @@ import com.google.android.gms.common.api.ResultCallback;
 
 public class MainActivity extends AppCompatActivity {
 
-    ProgressDialog pd;
-    Button shareReferral;
-    private static final String REFER_CODE = "ABCXYZ123", DRIVER_NAME = "Test Driver";
+    private static final String REFER_CODE = "ABCXYZ123", DRIVER_NAME = "TestDriver";
     private static final
     String INVITATION_TITLE = "Invite partners",
-            INVITATION_MESSAGE = "Please install Commut Partner app for added benefits. Refer Code: "+ REFER_CODE,
+            INVITATION_MESSAGE = "Please install Commut Partner app for added benefits. Refer Code: " + REFER_CODE,
             INVITATION_CALL_TO_ACTION = "Share";
+    ProgressDialog pd;
+    Button shareReferral;
     TextView textView;
 
     @Override
@@ -38,22 +40,50 @@ public class MainActivity extends AppCompatActivity {
         textView = (TextView) findViewById(R.id.textView);
         textView.setVisibility(View.GONE);
         pd = new ProgressDialog(this);
-        if(pd.isShowing())
+        if (pd.isShowing())
             pd.dismiss();
+        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+
         shareReferral.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pd.setTitle("Loading contacts");
-                pd.setMessage("Please wait ...");
-                pd.show();
-                Intent intent = new AppInviteInvitation.IntentBuilder(INVITATION_TITLE)
-                        .setMessage(INVITATION_MESSAGE)
-                        .setDeepLink(Uri.parse("commut://code.coupon/" + REFER_CODE + "/" + DRIVER_NAME))
-                        .setCallToActionText(INVITATION_CALL_TO_ACTION)
-                        .build();
-                startActivityForResult(intent, 0);
+                alertDialogBuilder.setTitle("Share Via");
+                alertDialogBuilder.setMessage("Share your referral code");
+                alertDialogBuilder.setPositiveButton("Share via SMS/Email", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        shareviaFirebase();
+                    }
+                });
+                alertDialogBuilder.setNegativeButton("Share via other", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        shareViaWhatsApp();
+                    }
+                });
+                alertDialogBuilder.show();
             }
         });
+    }
+
+    private void shareViaWhatsApp() {
+        Intent share = new Intent(Intent.ACTION_SEND);
+        share.setType("text/plain");
+        share.putExtra(Intent.EXTRA_TEXT, "https://code.coupon/" + REFER_CODE + "/" + DRIVER_NAME);
+        startActivity(Intent.createChooser(share, "Share using"));
+    }
+
+    private void shareviaFirebase() {
+
+        pd.setTitle("Loading contacts");
+        pd.setMessage("Please wait ...");
+        pd.show();
+        Intent intent = new AppInviteInvitation.IntentBuilder(INVITATION_TITLE)
+                .setMessage(INVITATION_MESSAGE)
+                .setDeepLink(Uri.parse("commut://code.coupon/" + REFER_CODE + "/" + DRIVER_NAME))
+                .setCallToActionText(INVITATION_CALL_TO_ACTION)
+                .build();
+        startActivityForResult(intent, 0);
 
 
         GoogleApiClient googleApiClient = new GoogleApiClient.Builder(this)
@@ -95,8 +125,15 @@ public class MainActivity extends AppCompatActivity {
 
             } else {
                 // Sending failed or it was canceled using the back button
-               // showMessage("Sorry, I wasn't able to send the invites");
+                // showMessage("Sorry, I wasn't able to send the invites");
             }
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(pd.isShowing())
+            pd.dismiss();
     }
 }
