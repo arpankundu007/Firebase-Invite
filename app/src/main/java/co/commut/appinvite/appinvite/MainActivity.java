@@ -23,6 +23,7 @@ import com.google.android.gms.common.api.ResultCallback;
 
 public class MainActivity extends AppCompatActivity {
 
+    private GoogleApiClient googleApiClient;
     private static final String REFER_CODE = "ABCXYZ123", DRIVER_NAME = "TestDriver";
     private static final
     String INVITATION_TITLE = "Invite partners",
@@ -80,13 +81,13 @@ public class MainActivity extends AppCompatActivity {
         pd.show();
         Intent intent = new AppInviteInvitation.IntentBuilder(INVITATION_TITLE)
                 .setMessage(INVITATION_MESSAGE)
-                .setDeepLink(Uri.parse("commut://code.coupon/" + REFER_CODE + "/" + DRIVER_NAME))
+                .setDeepLink(Uri.parse("https://code.coupon/" + REFER_CODE + "/" + DRIVER_NAME))
                 .setCallToActionText(INVITATION_CALL_TO_ACTION)
                 .build();
         startActivityForResult(intent, 0);
 
 
-        GoogleApiClient googleApiClient = new GoogleApiClient.Builder(this)
+        googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(AppInvite.API)
                 .enableAutoManage(this, new GoogleApiClient.OnConnectionFailedListener() {
                     @Override
@@ -135,5 +136,19 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if(pd.isShowing())
             pd.dismiss();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        googleApiClient.stopAutoManage(this);
+        googleApiClient.disconnect();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        googleApiClient.stopAutoManage(this);
+        googleApiClient.disconnect();
     }
 }
